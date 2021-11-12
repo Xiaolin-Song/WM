@@ -1,0 +1,40 @@
+library(mcmcse)
+library(dirmcmc)
+ff<-function(res){
+  N=length(res[[1]])
+  nk=0.1*N
+  mm<-c()
+  lik=res[[1]][nk:N]
+  k1<-ess(lik)
+  zk=apply(res[[2]],2,ess)
+  vv=c(min(zk))
+  #k1=multiESS(res[[2]][nk:N,])
+  t3=res[[3]]*(N-nk)/N
+  mm[1]<-k1
+  mm[2]<-vv
+  mm[3]=msjd(res[[2]][nk:N,])
+  mm[4:6]=mm[1:3]/t3
+  mm[7]<-t3
+  mm[8]<-accept(res[[2]][(N-nk):N,])
+  return(mm)
+}
+
+kf<-function(z){
+  dl=length(z)
+  mm<-matrix(0,dl,8)
+  colnames(mm)<-c("ESSL","ESS-min", "mjsd",
+                  "ESSL/s",
+                  "ESS-min/s",
+                  "mjsd/s",
+                  "time-cost",
+                  "acceptance_rate")
+  pnames=c("RWM","PCN","MPCN","GMPCN",
+           expression(paste(infinity,"-MALA",)),"Hug&hop","weave_metropolis",
+           "haar_weave_metropolis")
+  rownames(mm)<-pnames[z]
+  for(i in 1:dl){
+    res=get(paste("res_",z[i],sep=""))
+    mm[i,]<-ff2(res)
+  }
+  return(round(mm,2))
+}
